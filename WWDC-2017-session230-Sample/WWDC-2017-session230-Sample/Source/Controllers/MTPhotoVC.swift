@@ -10,15 +10,24 @@ import UIKit
 
 class MTPhotoVC: UIViewController {
     
-    override func loadView() {
-        super.loadView()
-        self.view.backgroundColor = .white
-    }
-
+    var backgroundImageView: UIImageView!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        // Do any additional setup after loading the view.
+        
+        backgroundImageView = UIImageView(frame: self.view.bounds)
+        backgroundImageView.image = UIImage(named: "background")
+        self.view.addSubview(backgroundImageView)
+        
+        let cardVC = MTCardVC()
+        self.addChildViewController(cardVC)
+        self.view.addSubview(cardVC.view)
+        cardVC.view.translatesAutoresizingMaskIntoConstraints = false
+        
+        self.view.addConstraint(NSLayoutConstraint(item: cardVC.view, attribute: .leading, relatedBy: .equal, toItem: self.view, attribute: .leading, multiplier: 1.0, constant: 0.0))
+        self.view.addConstraint(NSLayoutConstraint(item: cardVC.view, attribute: .trailing, relatedBy: .equal, toItem: self.view, attribute: .trailing, multiplier: 1.0, constant: 0.0))
+        self.view.addConstraint(NSLayoutConstraint(item: cardVC.view, attribute: .top, relatedBy: .equal, toItem: self.view, attribute: .bottom, multiplier: 1.0, constant: -64.0))
+        
     }
 
     override func didReceiveMemoryWarning() {
