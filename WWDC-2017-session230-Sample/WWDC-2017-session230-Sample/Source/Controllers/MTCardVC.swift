@@ -14,14 +14,11 @@ class MTCardVC: UIViewController {
    
     override func loadView() {
         super.loadView()
-        self.view.backgroundColor = UIColor.white
-        
+        self.view.backgroundColor = UIColor.clear
+                
         cardView = MTCardView(frame: .zero)
-        cardView.translatesAutoresizingMaskIntoConstraints = false
         self.view.addSubview(cardView)
         
-        self.view.addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "H:|-(0)-[cardView]-(0)-|", options: .directionLeadingToTrailing, metrics: nil, views: ["cardView":cardView]))
-        self.view.addConstraints( NSLayoutConstraint.constraints(withVisualFormat: "V:|-(0)-[cardView]-(0)-|", options: .directionLeadingToTrailing, metrics: nil, views: ["cardView":cardView]))
     }
 
     override func viewDidLoad() {

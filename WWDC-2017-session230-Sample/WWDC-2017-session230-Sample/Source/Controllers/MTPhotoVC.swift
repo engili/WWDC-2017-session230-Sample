@@ -24,9 +24,8 @@ class MTPhotoVC: UIViewController {
         self.view.addSubview(cardVC.view)
         cardVC.view.translatesAutoresizingMaskIntoConstraints = false
         
-        self.view.addConstraint(NSLayoutConstraint(item: cardVC.view, attribute: .leading, relatedBy: .equal, toItem: self.view, attribute: .leading, multiplier: 1.0, constant: 0.0))
-        self.view.addConstraint(NSLayoutConstraint(item: cardVC.view, attribute: .trailing, relatedBy: .equal, toItem: self.view, attribute: .trailing, multiplier: 1.0, constant: 0.0))
-        self.view.addConstraint(NSLayoutConstraint(item: cardVC.view, attribute: .top, relatedBy: .equal, toItem: self.view, attribute: .bottom, multiplier: 1.0, constant: -64.0))
+        self.view.addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "H:|-(0)-[cardView]-(0)-|", options: .directionLeadingToTrailing, metrics: nil, views: ["cardView": cardVC.view]))
+        self.view.addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "V:|-(0)-[cardView]-(0)-|", options: .directionLeadingToTrailing, metrics: nil, views: ["cardView": cardVC.view]))
         
     }
 
