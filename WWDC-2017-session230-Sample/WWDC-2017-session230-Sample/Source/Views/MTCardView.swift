@@ -117,6 +117,7 @@ class MTCardView: UIView {
         }
         containerView = UIView(frame: frame)
         containerView.backgroundColor = .white
+        containerView.clipsToBounds = true
         self.addSubview(containerView)
     }
     
@@ -215,6 +216,17 @@ class MTCardView: UIView {
             
             blurAnimator.pausesOnCompletion = true
             runningAnimators.append(blurAnimator)
+            
+            let cornerAnimator = UIViewPropertyAnimator(duration: Constants.duration, dampingRatio: 1.0) {
+                switch state {
+                case .Collapsed:
+                    self.containerView.layer.cornerRadius = 0.0
+                case .Expanded:
+                    self.containerView.layer.cornerRadius = 12.0
+                }
+            }
+            cornerAnimator.pausesOnCompletion = true
+            runningAnimators.append(cornerAnimator)
             
     
         }
