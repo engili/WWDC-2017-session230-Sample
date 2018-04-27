@@ -27,17 +27,54 @@ class MTCardView: UIView {
         fileprivate static let kExpandedFrame = CGRect(x: 0, y: kExpandedY, width: kViewWith, height: kViewHeight)
         
         fileprivate static let duration: TimeInterval = 0.75
+    
     }
     
     fileprivate var containerView: UIView!
     fileprivate var topTitleView: UIView!
-    fileprivate var titleLabel: UILabel!
+    fileprivate var outLabel: UILabel!
+    fileprivate var inLabel: UILabel!
     fileprivate var blurEffectView: UIVisualEffectView!
     
     fileprivate var runningAnimators = [UIViewPropertyAnimator]()
     fileprivate var currentState: State
     fileprivate var aimState: State?
     fileprivate var frameAnimatorObsverToken: NSKeyValueObservation?
+    
+    fileprivate var inLabelScale: CGAffineTransform {
+        get {
+            let inLabelWidth = inLabel.bounds.width
+            let outLabelWidth = outLabel.bounds.width
+            
+            let scale = inLabelWidth / outLabelWidth
+            return CGAffineTransform(scaleX: scale, y: scale)
+        }
+    }
+    
+    fileprivate var outLabelScale: CGAffineTransform {
+        get {
+            let inLabelWidth = inLabel.bounds.width
+            let outLabelWidth = outLabel.bounds.width
+            
+            let scale = outLabelWidth / inLabelWidth
+            return CGAffineTransform(scaleX: scale, y: scale)
+        }
+    }
+    
+    fileprivate var inLabelTranslation: CGAffineTransform {
+        get {
+            let translation: CGFloat = -10
+            return CGAffineTransform(translationX: 0.0, y: translation)
+        }
+    }
+    
+    fileprivate var outLabelTranslation: CGAffineTransform {
+        get {
+            let translation: CGFloat = 10
+            return CGAffineTransform(translationX: 0.0, y: translation)
+        }
+    }
+    
     
     //MARK: - Life Cycle
     deinit {
@@ -73,16 +110,12 @@ class MTCardView: UIView {
     }
 
     fileprivate func setupConstraints() {
-        //blurView
-//        self.addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "H:|-(0)-[blurEffectView]-(0)-|", options: .directionLeadingToTrailing, metrics: nil, views: ["blurEffectView":blurEffectView.contentView]))
-//        self.addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "V:|-(0)-[blurEffectView]-(0)-|", options: .directionLeadingToTrailing, metrics: nil, views: ["blurEffectView":blurEffectView.contentView]))
         
         self.addConstraint(NSLayoutConstraint(item: blurEffectView, attribute: .leading, relatedBy: .equal, toItem: self, attribute: .leading, multiplier: 1.0, constant: 0.0))
         self.addConstraint(NSLayoutConstraint(item: blurEffectView, attribute: .trailing, relatedBy: .equal, toItem: self, attribute: .trailing, multiplier: 1.0, constant: 0.0))
         self.addConstraint(NSLayoutConstraint(item: blurEffectView, attribute: .top, relatedBy: .equal, toItem: self, attribute: .top, multiplier: 1.0, constant: 0.0))
         self.addConstraint(NSLayoutConstraint(item: blurEffectView, attribute: .bottom, relatedBy: .equal, toItem: self, attribute: .bottom, multiplier: 1.0, constant: 0.0))
-        
-        
+    
         //topTitleView
         self.addConstraint(NSLayoutConstraint(item: topTitleView, attribute: .leading, relatedBy: .equal, toItem: self.containerView, attribute: .leading, multiplier: 1.0, constant: 0.0))
         self.addConstraint(NSLayoutConstraint(item: topTitleView, attribute: .trailing, relatedBy: .equal, toItem: self.containerView, attribute: .trailing, multiplier: 1.0, constant: 0.0))
@@ -90,8 +123,11 @@ class MTCardView: UIView {
         self.addConstraint(NSLayoutConstraint(item: topTitleView, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .notAnAttribute, multiplier: 0.0, constant: Constants.kTitleHeight))
         
         //titleLabel
-        topTitleView.addConstraint(NSLayoutConstraint(item: titleLabel, attribute: .centerX, relatedBy: .equal, toItem: topTitleView, attribute: .centerX, multiplier: 1.0, constant: 0.0))
-        topTitleView.addConstraint(NSLayoutConstraint(item: titleLabel, attribute: .centerY, relatedBy: .equal, toItem: topTitleView, attribute: .centerY, multiplier: 1.0, constant: 0.0))
+        topTitleView.addConstraint(NSLayoutConstraint(item: outLabel, attribute: .centerX, relatedBy: .equal, toItem: topTitleView, attribute: .centerX, multiplier: 1.0, constant: 0.0))
+        topTitleView.addConstraint(NSLayoutConstraint(item: outLabel, attribute: .centerY, relatedBy: .equal, toItem: topTitleView, attribute: .centerY, multiplier: 1.0, constant: 0.0))
+        
+        topTitleView.addConstraint(NSLayoutConstraint(item: inLabel, attribute: .centerX, relatedBy: .equal, toItem: topTitleView, attribute: .centerX, multiplier: 1.0, constant: 0.0))
+        topTitleView.addConstraint(NSLayoutConstraint(item: inLabel, attribute: .centerY, relatedBy: .equal, toItem: topTitleView, attribute: .centerY, multiplier: 1.0, constant: -10.0))
     }
     
     fileprivate func setupBlurView() {
@@ -118,6 +154,8 @@ class MTCardView: UIView {
         containerView = UIView(frame: frame)
         containerView.backgroundColor = .white
         containerView.clipsToBounds = true
+        containerView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+        
         self.addSubview(containerView)
     }
     
@@ -130,12 +168,29 @@ class MTCardView: UIView {
     }
     
     fileprivate func setupTitleLabel() {
-        titleLabel = UILabel(frame: .zero)
-        titleLabel.textColor = UIColor.black
-        titleLabel.text = "Comments"
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        outLabel = UILabel(frame: .zero)
+        outLabel.textColor = UIColor.blue
+        outLabel.text = "Comments"
+        outLabel.translatesAutoresizingMaskIntoConstraints = false
+        outLabel.font = UIFont.systemFont(ofSize: 17.0)
         
-        topTitleView.addSubview(titleLabel)
+        inLabel = UILabel(frame: .zero)
+        inLabel.textColor = UIColor.black
+        inLabel.text = "Comments"
+        inLabel.translatesAutoresizingMaskIntoConstraints = false
+        inLabel.font = UIFont.systemFont(ofSize: 25.0)
+        
+        switch currentState {
+        case .Collapsed:
+            outLabel.alpha = 1.0
+            inLabel.alpha = 0.0
+        case .Expanded:
+            outLabel.alpha = 0.0
+            inLabel.alpha = 1.0
+        }
+        
+        topTitleView.addSubview(outLabel)
+        topTitleView.addSubview(inLabel)
     }
     
     //MARK: - Gesture
@@ -166,11 +221,9 @@ class MTCardView: UIView {
             self.updateInteractiveTransition(fractionComplete: fabs(transtion.y / deltY))
         case .ended:
             self.continueInteractiveTransition(cancel: false)
-            break
         default:
             break
         }
-
     }
     
     //MARK: - Animation
@@ -184,7 +237,6 @@ class MTCardView: UIView {
                     self.containerView.frame = Constants.kCollapsedFrame
                 }
             }
-            
             frameAnimator.pausesOnCompletion = true
             runningAnimators.append(frameAnimator)
 
@@ -199,13 +251,16 @@ class MTCardView: UIView {
                             self.containerView.frame = Constants.kExpandedFrame
                         }
                     }
+                    for inAnimator in self.runningAnimators {
+                        inAnimator.stopAnimation(true)
+                    }
                     self.runningAnimators.removeAll()
                     self.frameAnimatorObsverToken = nil
                     self.aimState = nil
                 }
             }
             
-            let blurAnimator = UIViewPropertyAnimator(duration: Constants.duration, dampingRatio: 1.0) { [unowned self] in
+            let blurAnimator = UIViewPropertyAnimator(duration: duration, dampingRatio: 1.0) { [unowned self] in
                 switch state {
                 case .Collapsed:
                     self.blurEffectView.effect = nil
@@ -213,11 +268,10 @@ class MTCardView: UIView {
                     self.blurEffectView.effect = UIBlurEffect(style: .dark)
                 }
             }
-            
             blurAnimator.pausesOnCompletion = true
             runningAnimators.append(blurAnimator)
             
-            let cornerAnimator = UIViewPropertyAnimator(duration: Constants.duration, dampingRatio: 1.0) {
+            let cornerAnimator = UIViewPropertyAnimator(duration: duration, dampingRatio: 1.0) { [unowned self] in
                 switch state {
                 case .Collapsed:
                     self.containerView.layer.cornerRadius = 0.0
@@ -228,7 +282,51 @@ class MTCardView: UIView {
             cornerAnimator.pausesOnCompletion = true
             runningAnimators.append(cornerAnimator)
             
-    
+            let transformAnimator = UIViewPropertyAnimator(duration: duration, dampingRatio: 1.0) { [unowned self] in
+                switch state {
+                case .Collapsed:
+                    self.inLabel.transform = self.outLabelScale.concatenating(self.outLabelTranslation)
+                    self.outLabel.transform = CGAffineTransform.identity
+                case .Expanded:
+                    self.inLabel.transform = CGAffineTransform.identity
+                    self.outLabel.transform = self.inLabelScale.concatenating(self.inLabelTranslation)
+                }
+            }
+            transformAnimator.pausesOnCompletion = true
+            runningAnimators.append(transformAnimator)
+            
+            switch state {
+            case .Collapsed:
+                let inLabelAlpahAnimator = UIViewPropertyAnimator(duration: duration, curve: .easeOut) { [unowned self] in
+                    self.inLabel.alpha = 0.0
+                }
+                inLabelAlpahAnimator.scrubsLinearly = false
+                inLabelAlpahAnimator.pausesOnCompletion = true
+                runningAnimators.append(inLabelAlpahAnimator)
+                
+                let outLabelAlphaAnimator = UIViewPropertyAnimator(duration: duration, curve: .easeIn) { [unowned self] in
+                    self.outLabel.alpha = 1.0
+                }
+                outLabelAlphaAnimator.scrubsLinearly = false
+                outLabelAlphaAnimator.pausesOnCompletion = true
+                runningAnimators.append(outLabelAlphaAnimator)
+            
+            case .Expanded:
+                let inLabelAlpahAnimator = UIViewPropertyAnimator(duration: duration, curve: .easeIn) { [unowned self] in
+                    self.inLabel.alpha = 1.0
+                }
+                inLabelAlpahAnimator.scrubsLinearly = false
+                inLabelAlpahAnimator.pausesOnCompletion = true
+                runningAnimators.append(inLabelAlpahAnimator)
+                
+                let outLabelAlphaAnimator = UIViewPropertyAnimator(duration: duration, curve: .easeOut) { [unowned self] in
+                    self.outLabel.alpha = 0.0
+                }
+                outLabelAlphaAnimator.scrubsLinearly = false
+                outLabelAlphaAnimator.pausesOnCompletion = true
+                runningAnimators.append(outLabelAlphaAnimator)
+            }
+        
         }
     }
     
@@ -275,7 +373,5 @@ class MTCardView: UIView {
                 animtor.continueAnimation(withTimingParameters: nil, durationFactor: 1.0)
             }
         }
-        
     }
-    
 }
